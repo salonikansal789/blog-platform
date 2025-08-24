@@ -4,7 +4,7 @@ import helmet from "helmet";
 import dotenv from "dotenv";
 
 import { connectDatabase } from "./config/database";
-import { errorHandler, notFound, limiter, requestLogger } from "./middleware";
+import { errorHandler, notFound, requestLogger } from "./middleware";
 import postRoutes from "./routes/post.route";
 dotenv.config();
 
@@ -44,8 +44,6 @@ class App {
         credentials: true,
       })
     );
-
-    this.app.use(limiter);
 
     this.app.use(express.json({ limit: "10mb" }));
     this.app.use(express.urlencoded({ extended: true, limit: "10mb" }));

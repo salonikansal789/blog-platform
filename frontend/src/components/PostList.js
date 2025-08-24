@@ -16,8 +16,11 @@ const PostList = () => {
 
   useEffect(() => {
     fetchPosts();
+  }, [currentPage, appliedSearch, selectedTags]);
+
+  useEffect(() => {
     fetchTags();
-  }, [currentPage, appliedSearch]);
+  }, [currentPage]);
 
   const fetchPosts = async () => {
     try {
@@ -32,9 +35,8 @@ const PostList = () => {
       setPosts(response.data.data.posts);
       setTotalPages(response.data.data.pagination.totalPages);
     } catch (err) {
-      setError("Failed to fetch posts");
+      setError(err?.response?.data?.message);
       console.error(err);
-      toast.error("Failed to fetch posts");
     } finally {
       setLoading(false);
     }
@@ -43,6 +45,7 @@ const PostList = () => {
   const fetchTags = async () => {
     try {
       const response = await blogAPI.getTags();
+
       setTags(response.data.data.tags || []);
     } catch (err) {
       console.error("Failed to fetch tags:", err);
@@ -68,14 +71,12 @@ const PostList = () => {
   const toggleTag = (tagName) => {
     if (tagName === "All") {
       setSelectedTags([]);
-      fetchPosts();
     } else {
       setSelectedTags((prev) =>
         prev.includes(tagName)
           ? prev.filter((t) => t !== tagName)
           : [...prev, tagName]
       );
-      fetchPosts();
     }
     setCurrentPage(1);
   };

@@ -36,7 +36,7 @@ class PostService extends ResponseService {
       return this.serviceResponse(
         404,
         {},
-        "No posts found matching the criteria"
+        "No posts found"
       );
     }
 

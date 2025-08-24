@@ -10,7 +10,12 @@ const PostDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState({ title: "", content: "" });
+  const [editForm, setEditForm] = useState({
+    title: "",
+    content: "",
+    summary: "",
+    tags: "",
+  });
 
   useEffect(() => {
     fetchPost();
@@ -20,9 +25,7 @@ const PostDetail = () => {
     try {
       setLoading(true);
       const response = await blogAPI.getPost(id);
-      debugger;
       setPost(response.data.data.post);
-      toast.success("Post fetched successfully!");
     } catch (err) {
       setError(err?.response?.data?.message);
       // toast.error(err?.response?.data?.message );
@@ -47,12 +50,24 @@ const PostDetail = () => {
     setEditForm({
       title: post.title,
       content: post.content,
+      summary: post.summary,
+      tags: Array.isArray(post.tags) ? post.tags.join(" ") : post.tags || "",
     });
   };
 
-  const handleSave = async () => {
+  const handleSave = async (e) => {
+    e.preventDefault();
+
     try {
-      const response = await blogAPI.updatePost(id, editForm);
+      const tagsArray = editForm.tags
+        .split(/[\s,]+/) // split by comma or space
+        .map((tag) => tag.trim().toLowerCase())
+        .filter(Boolean);
+
+      const response = await blogAPI.updatePost(id, {
+        ...editForm,
+        tags: tagsArray,
+      });
       setPost(response.data.data.post);
       setIsEditing(false);
       toast.success("Post updated successfully!");
@@ -136,11 +151,12 @@ const PostDetail = () => {
           <article className="post">
             <header className="post-header">
               <h1>{post.title}</h1>
+              <p className="post-summary">{post.summary}</p>{" "}
               <div className="post-meta">
-                <div className="post-tags">
+                <div className="tags-container">
                   {post.tags.map((tag) => (
                     <span key={tag} className="tag">
-                      {tag.charAt(0).toUpperCase() + tag.slice(1)}3
+                      {tag.charAt(0).toUpperCase() + tag.slice(1)}
                     </span>
                   ))}
                 </div>
