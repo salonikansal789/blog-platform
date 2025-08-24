@@ -36,14 +36,14 @@ Deployment: Docker & Docker Compose
 1️⃣ Run via Docker directly
 
 # Pull frontend & backend images
-docker pull salonidev/assignment-main-frontend:latest
+Frontend :  docker pull salonidev/assignment-main-frontend:latest
 
-docker pull salonidev/assignment-main-backend:latest
+Backend:  docker pull salonidev/assignment-main-backend:latest
 
 # Run containers
-docker run -p 3000:80 -d salonidev/assignment-main-frontend:latest
+Frontend:  docker run -p 3000:80 -d salonidev/assignment-main-frontend:latest
 
-docker run -p 3001:3001 -d salonidev/assignment-main-backend:latest
+Backend:  docker run -p 3001:3001 -d salonidev/assignment-main-backend:latest
 
 Frontend → http://localhost:3000
 
