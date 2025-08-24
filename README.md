@@ -32,26 +32,28 @@ Database: MongoDB Atlas (Cloud Database)
 Deployment: Docker & Docker Compose
 
 ⚙️ Installation & Running
+
 1️⃣ Run via Docker directly
+
 # Pull frontend & backend images
 docker pull salonidev/assignment-main-frontend:latest
+
 docker pull salonidev/assignment-main-backend:latest
 
 # Run containers
 docker run -p 3000:80 -d salonidev/assignment-main-frontend:latest
+
 docker run -p 3001:3001 -d salonidev/assignment-main-backend:latest
 
 Frontend → http://localhost:3000
 
 Backend → http://localhost:3001
 
-2️⃣ Run with Docker Compose
 
-From the project root:
-docker-compose up -d
 
 🗄️ Database Setup
 
 The backend connects to MongoDB Atlas.
 
 You must set the MONGODB_URI in your backend .env file
+
