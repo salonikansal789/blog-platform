@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { blogAPI } from "../services/api";
+import { toast } from "react-toastify";
 
 const AddPost = () => {
   const navigate = useNavigate();
@@ -46,9 +47,11 @@ const AddPost = () => {
 
       await blogAPI.createPost(postData);
       navigate("/");
+      toast.success("Post created successfully!");
     } catch (err) {
       setError("Failed to create post");
       console.error(err);
+      toast.error("Failed to create post");
     } finally {
       setLoading(false);
     }

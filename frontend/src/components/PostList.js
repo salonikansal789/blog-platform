@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
 
 import { blogAPI } from "../services/api";
 const PostList = () => {
@@ -16,7 +17,7 @@ const PostList = () => {
   useEffect(() => {
     fetchPosts();
     fetchTags();
-  }, [selectedTags, currentPage, appliedSearch]);
+  }, [currentPage, appliedSearch]);
 
   const fetchPosts = async () => {
     try {
@@ -33,6 +34,7 @@ const PostList = () => {
     } catch (err) {
       setError("Failed to fetch posts");
       console.error(err);
+      toast.error("Failed to fetch posts");
     } finally {
       setLoading(false);
     }
@@ -44,6 +46,7 @@ const PostList = () => {
       setTags(response.data.data.tags || []);
     } catch (err) {
       console.error("Failed to fetch tags:", err);
+      toast.error("Failed to fetch tags");
     }
   };
 
@@ -65,14 +68,29 @@ const PostList = () => {
   const toggleTag = (tagName) => {
     if (tagName === "All") {
       setSelectedTags([]);
+      fetchPosts();
     } else {
       setSelectedTags((prev) =>
         prev.includes(tagName)
           ? prev.filter((t) => t !== tagName)
           : [...prev, tagName]
       );
+      fetchPosts();
     }
     setCurrentPage(1);
+  };
+
+  const handleDelete = async (postId) => {
+    if (!window.confirm("Are you sure you want to delete this post?")) return;
+
+    try {
+      await blogAPI.deletePost(postId);
+      toast.success("Post deleted successfully!");
+      fetchPosts();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to delete post");
+    }
   };
 
   return (
@@ -156,6 +174,17 @@ const PostList = () => {
                   <span> {`${post.likes} Likes`}</span>
                   <span>{`${post.comments?.length || 0} Comments`}</span>
                   <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+                  <i
+                    className="fas fa-trash"
+                    style={{
+                      color: "red",
+                      cursor: "pointer",
+                      fontSize: "18px",
+                      marginLeft: "10px",
+                    }}
+                    onClick={() => handleDelete(post._id)}
+                    title="Delete Post"
+                  />
                 </div>
               </div>
             </div>

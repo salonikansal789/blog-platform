@@ -3,6 +3,8 @@ import "./App.css";
 import PostList from "./components/PostList";
 import PostDetail from "./components/PostDetail";
 import AddPost from "./components/AddPost";
+import { ToastContainer } from "react-toastify";
+import NotFound from "./components/pages/NotFound";
 
 function App() {
   return (
@@ -29,8 +31,19 @@ function App() {
             <Route path="/" element={<PostList />} />
             <Route path="/post/:id" element={<PostDetail />} />
             <Route path="/add-post" element={<AddPost />} />
+
+            {/* Catch-all for wrong routes */}
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={true}
+          closeOnClick
+          pauseOnHover
+        />
       </div>
     </Router>
   );

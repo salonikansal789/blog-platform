@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { IPost } from "../interface/post.interface";
 import { IComment } from "../interface/comment.interface";
 import Post from "../models/posts";
@@ -9,357 +9,172 @@ import {
 } from "../validation/post.validation";
 import { commentSchema } from "../validation/comment.validation";
 import mongoose from "mongoose";
+import ResponseService from "../service/response.service";
+import { postService } from "../service/post.service";
 
-export class PostController {
-  public async getAllPosts(req: Request, res: Response): Promise<void> {
+export class PostController extends ResponseService {
+  private readonly postService = postService;
+
+  public getAllPosts = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { error, value } = querySchema.validate(req.query);
 
       if (error) {
-        res.status(400).json({
-          success: false,
-          message: "Invalid query parameters",
-          errors: error.details.map((detail) => detail.message),
-        });
-        return;
+        this.sendResponse(res, 400, undefined, "Invalid query parameters");
       }
 
-      const { page, limit, tags, search, sort } = value;
-      const skip = (page - 1) * limit;
+      const { data, message, statusCode } =
+        await this.postService.getAllPosts(value);
 
-      let query: any = {};
-
-      if (tags) {
-        const tagArray = tags
-          .split(",")
-          .map((tag: string) => tag.trim().toLowerCase());
-        query.tags = { $in: tagArray };
-      }
-
-      if (search) {
-        query.title = { $regex: search, $options: "i" };
-      }
-
-      const posts = await Post.find(query)
-        .select("title summary tags likes createdAt updatedAt")
-        .sort(sort)
-        .skip(skip)
-        .limit(limit)
-        .lean();
-
-      const total = await Post.countDocuments(query);
-
-      res.status(200).json({
-        success: true,
-        data: {
-          posts,
-          pagination: {
-            currentPage: page,
-            totalPages: Math.ceil(total / limit),
-            totalPosts: total,
-            hasNextPage: page < Math.ceil(total / limit),
-            hasPrevPage: page > 1,
-          },
-        },
-      });
+      this.sendResponse(res, statusCode, data, message);
     } catch (error) {
-      console.error("Error fetching posts:", error);
-      res.status(500).json({
-        success: false,
-        message: "Internal server error while fetching posts",
-      });
+      this.sendResponse(
+        res,
+        500,
+        undefined,
+        "Internal server error while fetching posts"
+      );
     }
-  }
+  };
 
-  public async getPostById(req: Request, res: Response): Promise<void> {
+  public getPostById = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
 
-      if (!mongoose.Types.ObjectId.isValid(id)) {
-        res.status(400).json({
-          success: false,
-          message: "Invalid post ID format",
-        });
-        return;
-      }
+      const { data, message, statusCode } =
+        await this.postService.getPostById(id);
 
-      const post = await Post.findById(id).lean();
-
-      if (!post) {
-        res.status(404).json({
-          success: false,
-          message: "Post not found",
-        });
-        return;
-      }
-
-      res.status(200).json({
-        success: true,
-        data: { post },
-      });
+      this.sendResponse(res, statusCode, data, message);
     } catch (error) {
-      console.error("Error fetching post:", error);
-      res.status(500).json({
-        success: false,
-        message: "Internal server error while fetching post",
-      });
+      this.sendResponse(res, 500, undefined, "Internal server error");
     }
-  }
+  };
 
-  public async createPost(req: Request, res: Response): Promise<void> {
+  public createPost = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { error, value } = createPostSchema.validate(req.body);
 
       if (error) {
-        res.status(400).json({
-          success: false,
-          message: "Validation error",
-          errors: error.details.map((detail) => detail.message),
-        });
-        return;
+        this.sendResponse(res, 400, undefined, "Invalid body parameters");
       }
 
-      const newPost = new Post(value);
-      const savedPost = await newPost.save();
-
-      res.status(201).json({
-        success: true,
-        message: "Post created successfully",
-        data: { post: savedPost },
-      });
+      const { data, message, statusCode } =
+        await this.postService.createPost(value);
+      this.sendResponse(res, statusCode, data, message);
     } catch (error) {
-      console.error("Error creating post:", error);
-      res.status(500).json({
-        success: false,
-        message: "Internal server error while creating post",
-      });
+      this.sendResponse(res, 500, undefined, "Internal server error");
     }
-  }
+  };
 
-  public async updatePost(req: Request, res: Response): Promise<void> {
+  public updatePost = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
-
-      if (!mongoose.Types.ObjectId.isValid(id)) {
-        res.status(400).json({
-          success: false,
-          message: "Invalid post ID format",
-        });
-        return;
-      }
 
       const { error, value } = updatePostSchema.validate(req.body);
 
       if (error) {
-        res.status(400).json({
-          success: false,
-          message: "Validation error",
-          errors: error.details.map((detail) => detail.message),
-        });
-        return;
+        this.sendResponse(res, 400, undefined, "Invalid body parameters");
       }
 
-      const updatedPost = await Post.findByIdAndUpdate(
+      const { data, message, statusCode } = await this.postService.updatePost(
         id,
-        { ...value, updatedAt: new Date() },
-        { new: true, runValidators: true }
-      ).lean();
-
-      if (!updatedPost) {
-        res.status(404).json({
-          success: false,
-          message: "Post not found",
-        });
-        return;
-      }
-
-      res.status(200).json({
-        success: true,
-        message: "Post updated successfully",
-        data: { post: updatedPost },
-      });
+        value
+      );
+      this.sendResponse(res, statusCode, data, message);
     } catch (error) {
-      console.error("Error updating post:", error);
-      res.status(500).json({
-        success: false,
-        message: "Internal server error while updating post",
-      });
+      this.sendResponse(res, 500, undefined, "Internal server error");
     }
-  }
+  };
 
-  public async deletePost(req: Request, res: Response): Promise<void> {
+  public deletePost = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
 
       if (!mongoose.Types.ObjectId.isValid(id)) {
-        res.status(400).json({
-          success: false,
-          message: "Invalid post ID format",
-        });
-        return;
+        this.sendResponse(res, 400, undefined, "Invalid params parameters");
       }
 
-      const deletedPost = await Post.findByIdAndDelete(id);
-
-      if (!deletedPost) {
-        res.status(404).json({
-          success: false,
-          message: "Post not found",
-        });
-        return;
-      }
-
-      res.status(200).json({
-        success: true,
-        message: "Post deleted successfully",
-      });
+      const { data, message, statusCode } =
+        await this.postService.deletePost(id);
+      this.sendResponse(res, statusCode, data, message);
     } catch (error) {
-      console.error("Error deleting post:", error);
-      res.status(500).json({
-        success: false,
-        message: "Internal server error while deleting post",
-      });
+      this.sendResponse(res, 500, undefined, "Internal server error");
     }
-  }
-
-  public async likePost(req: Request, res: Response): Promise<void> {
+  };
+  public likePost = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
 
       if (!mongoose.Types.ObjectId.isValid(id)) {
-        res.status(400).json({
-          success: false,
-          message: "Invalid post ID format",
-        });
-        return;
+        this.sendResponse(res, 400, undefined, "Invalid params parameters");
       }
 
-      const post = await Post.findByIdAndUpdate(
-        id,
-        { $inc: { likes: 1 } },
-        { new: true }
-      )
-        .select("likes")
-        .lean();
-
-      if (!post) {
-        res.status(404).json({
-          success: false,
-          message: "Post not found",
-        });
-        return;
-      }
-
-      res.status(200).json({
-        success: true,
-        message: "Post liked successfully",
-        data: { likes: post.likes },
-      });
+      const { data, message, statusCode } = await this.postService.likePost(id);
+      this.sendResponse(res, statusCode, data, message);
     } catch (error) {
-      console.error("Error liking post:", error);
-      res.status(500).json({
-        success: false,
-        message: "Internal server error while liking post",
-      });
+      this.sendResponse(res, 500, undefined, "Internal server error");
     }
-  }
+  };
 
-  public async addComment(req: Request, res: Response): Promise<void> {
+  public addComment = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
       const { parentCommentId } = req.query;
 
-      if (!mongoose.Types.ObjectId.isValid(id)) {
-        res.status(400).json({
-          success: false,
-          message: "Invalid post ID format",
-        });
-        return;
-      }
-
       const { error, value } = commentSchema.validate(req.body);
 
       if (error) {
-        res.status(400).json({
-          success: false,
-          message: "Validation error",
-          errors: error.details.map((detail) => detail.message),
-        });
-        return;
+        this.sendResponse(res, 400, undefined, "Invalid body parameters");
       }
-
-      const newComment: IComment = {
-        _id: new mongoose.Types.ObjectId(),
-        content: value.content,
-        author: value.author,
-        createdAt: new Date(),
-        replies: [],
-      };
-
-      let post;
-
-      if (
-        parentCommentId &&
-        mongoose.Types.ObjectId.isValid(parentCommentId as string)
-      ) {
-        post = await Post.findOneAndUpdate(
-          { _id: id, "comments._id": parentCommentId },
-          { $push: { "comments.$.replies": newComment } },
-          { new: true }
-        ).lean();
-      } else {
-        post = await Post.findByIdAndUpdate(
-          id,
-          { $push: { comments: newComment } },
-          { new: true }
-        ).lean();
-      }
-
-      if (!post) {
-        res.status(404).json({
-          success: false,
-          message: parentCommentId
-            ? "Post or parent comment not found"
-            : "Post not found",
-        });
-        return;
-      }
-
-      res.status(201).json({
-        success: true,
-        message: "Comment added successfully",
-        data: { comment: newComment },
-      });
+      const { data, message, statusCode } = await this.postService.addComment(
+        id,
+        value as IComment,
+        parentCommentId as string
+      );
+      this.sendResponse(res, statusCode, data, message);
     } catch (error) {
-      console.error("Error adding comment:", error);
-      res.status(500).json({
-        success: false,
-        message: "Internal server error while adding comment",
-      });
+      this.sendResponse(res, 500, undefined, "Internal server error");
     }
-  }
+  };
 
-  public async getTags(req: Request, res: Response): Promise<void> {
+  public getTags = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
-      const tags = await Post.aggregate([
-        { $unwind: "$tags" },
-        { $group: { _id: "$tags", count: { $sum: 1 } } },
-        { $sort: { count: -1 } },
-        { $limit: 50 },
-      ]);
-
-      res.status(200).json({
-        success: true,
-        data: {
-          tags: tags.map((tag) => ({ name: tag._id, count: tag.count })),
-        },
-      });
+      const { data, message, statusCode } = await this.postService.getTags();
+      this.sendResponse(res, statusCode, data, message);
     } catch (error) {
-      console.error("Error fetching tags:", error);
-      res.status(500).json({
-        success: false,
-        message: "Internal server error while fetching tags",
-      });
+      this.sendResponse(res, 500, undefined, "Internal server error");
     }
-  }
+  };
 }

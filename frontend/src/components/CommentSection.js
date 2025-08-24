@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { blogAPI } from "../services/api";
+import { toast } from "react-toastify";
+
 const Comment = ({ comment, postId, onCommentAdded, level = 0 }) => {
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyData, setReplyData] = useState({ content: "", author: "" });
@@ -26,8 +28,10 @@ const Comment = ({ comment, postId, onCommentAdded, level = 0 }) => {
       setReplyData({ content: "", author: "" });
       setShowReplyForm(false);
       onCommentAdded();
+      toast.success("Reply added successfully!");
     } catch (err) {
       console.error("Failed to add reply:", err);
+      toast.error("Failed to add reply");
     } finally {
       setLoading(false);
     }
@@ -125,8 +129,10 @@ const CommentSection = ({ postId, comments, onCommentAdded }) => {
       await blogAPI.addComment(postId, commentData);
       setCommentData({ content: "", author: "" });
       onCommentAdded();
+      toast.success("Comment added successfully!");
     } catch (err) {
       console.error("Failed to add comment:", err);
+      toast.error("Failed to add comment");
     } finally {
       setLoading(false);
     }

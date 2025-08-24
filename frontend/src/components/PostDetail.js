@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { blogAPI } from "../services/api";
 import CommentSection from "./CommentSection";
+import { toast } from "react-toastify";
 
 const PostDetail = () => {
   const { id } = useParams();
@@ -19,10 +20,12 @@ const PostDetail = () => {
     try {
       setLoading(true);
       const response = await blogAPI.getPost(id);
+      debugger;
       setPost(response.data.data.post);
+      toast.success("Post fetched successfully!");
     } catch (err) {
-      setError("Failed to fetch post");
-      console.error(err);
+      setError(err?.response?.data?.message);
+      // toast.error(err?.response?.data?.message );
     } finally {
       setLoading(false);
     }
@@ -32,8 +35,10 @@ const PostDetail = () => {
     try {
       await blogAPI.likePost(id);
       setPost((prev) => ({ ...prev, likes: prev.likes + 1 }));
+      toast.success("Post liked!");
     } catch (err) {
       console.error("Failed to like post:", err);
+      toast.error("Failed to like post");
     }
   };
 
@@ -50,8 +55,10 @@ const PostDetail = () => {
       const response = await blogAPI.updatePost(id, editForm);
       setPost(response.data.data.post);
       setIsEditing(false);
+      toast.success("Post updated successfully!");
     } catch (err) {
       console.error("Failed to update post:", err);
+      toast.error("Failed to update post");
     }
   };
 
