@@ -5,7 +5,7 @@ dotenv.config();
 
 const MONGODB_URI =
   process.env.MONGODB_URI ||
-  "mongodb+srv://salonikansal789:saloni@cluster0.ji59ihu.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+  "";
 
 export const connectDatabase = async (): Promise<void> => {
   try {
